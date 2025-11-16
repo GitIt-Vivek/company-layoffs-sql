@@ -1,162 +1,193 @@
-# 📊 Company Layoffs SQL Project  
-### *Data Cleaning + Exploratory Data Analysis (EDA) using MySQL*
+<!-- PROJECT LOGO -->
+<p align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/MySQL_textlogo.svg" alt="Logo" width="220">
+</p>
 
-This project performs **end-to-end data cleaning** and **exploratory data analysis** on a dataset containing global company layoffs.  
-All work is done using **MySQL**, following industry-standard methods for data preprocessing and analytics.
+<h1 align="center">📊 Company Layoffs SQL Project</h1>
+<h3 align="center">Data Cleaning + Exploratory Data Analysis (EDA) using MySQL</h3>
+
+<p align="center">
+A complete SQL workflow to clean, prepare, and analyze global company layoff data.
+</p>
 
 ---
 
-## 🧹 1. Project Overview
+# 🏷️ Badges
 
-The goal of this project is to:
-📊 Company Layoffs SQL Project
-Data Cleaning + Exploratory Data Analysis (EDA) using MySQL
+<p align="left">
+  <img src="https://img.shields.io/badge/SQL-MySQL-blue?logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Analysis-EDA-green" />
+  <img src="https://img.shields.io/badge/Version-0.1.0-orange" />
+  <img src="https://img.shields.io/badge/Made%20With-SQL-lightgrey" />
+</p>
 
-This project performs end-to-end data cleaning and exploratory data analysis on a dataset containing global company layoffs.
-All work is done using MySQL, following industry-standard data cleaning methods and analytical best-practices.
+---
 
-🧹 1. Project Overview
+# 📚 Table of Contents
 
-The goal of this project is to:
+- [1. Project Overview](#1-project-overview)
+- [2. Database Setup](#2-database-setup)
+- [3. Data Cleaning Steps](#3-data-cleaning-steps)
+- [4. Exploratory Data Analysis](#4-exploratory-data-analysis)
+- [5. Insights](#5-insights)
+- [6. Files in Repository](#6-files-in-repository)
+- [7. Tech Stack](#7-tech-stack)
+- [8. Key Learnings](#8-key-learnings)
+- [9. Future Enhancements](#9-future-enhancements)
 
-Import raw layoffs data
+---
 
-Create a safe staging table
+# 1. Project Overview
 
-Clean, standardize, and structure the dataset
+This project performs end-to-end **data cleaning** and **exploratory data analysis (EDA)** on a dataset containing global company layoffs.
 
-Remove duplicates
+The project workflow includes:
 
-Handle null values
+- Importing and staging raw data  
+- Cleaning and standardizing columns  
+- Removing duplicates using window functions  
+- Handling null and inconsistent values  
+- Converting text fields into proper SQL data types  
+- Running analytical queries to uncover insights  
 
-Fix inconsistencies in industry and country fields
+Core SQL concepts applied:
 
-Convert data types
+- Window functions  
+- Aggregations  
+- Pattern cleaning  
+- Joins for missing data imputation  
+- Staging → cleaned dataset workflow  
 
-Perform exploratory data analysis (EDA) to uncover insights about layoffs across companies, industries, and countries.
+---
 
-This project demonstrates SQL proficiency in:
+# 2. Database Setup
 
-Window Functions
+Two staging tables are created:
 
-CTEs
+1. **layoffs_staging** — Raw backup copy  
+2. **layoffs_staging_2** — Cleaned and deduplicated dataset  
 
-Aggregations
-
-Date cleaning
-
-JOIN-based updating
-
-Data preprocessing workflows
-
-🏗️ 2. Database Setup
-
-A staging table layoffs_staging is created to protect raw data.
-A second staging table layoffs_staging_2 is built to attach row numbers and safely remove duplicates.
-
+```sql
 CREATE TABLE layoffs_staging LIKE layoffs;
 
 INSERT INTO layoffs_staging
 SELECT * FROM layoffs;
+```
 
-🧼 3. Data Cleaning Steps
-✔️ Step 1: Remove Duplicates
+---
 
-Used ROW_NUMBER() window function partitioned by all relevant columns.
+# 3. Data Cleaning Steps
 
-Identified duplicate rows.
+## ✔️ Step 1: Remove Duplicates
 
-Created layoffs_staging_2 and removed rows where row_num > 1.
+- Applied `ROW_NUMBER()` partitioned by key attributes  
+- Identified duplicate rows  
+- Removed rows with `row_num > 1`  
 
-✔️ Step 2: Standardize Data
+## ✔️ Step 2: Standardize Data
 
-Trimmed extra spaces from company names.
+- Trimmed company names  
+- Standardized industry values  
+- Cleaned inconsistent country names  
+- Converted date column to SQL `DATE`  
 
-Standardized industry values (Crypto, etc.)
+## ✔️ Step 3: Handle Null Values
 
-Cleaned country names (United States vs United States of America)
+- Converted blank fields into `NULL`  
+- Filled missing industry values using a self join  
+- Removed rows with no meaningful layoff information  
 
-Converted date column from text to proper DATE type.
+## ✔️ Step 4: Final Dataset Ready
 
-✔️ Step 3: Handle Null Values
+- `layoffs_staging_2` is used for all analysis  
 
-Replaced blank industries with NULL.
+---
 
-Filled missing industries by joining on company name (e.g., Airbnb).
+# 4. Exploratory Data Analysis
 
-Removed rows where both total_laid_off AND percentage_laid_off were NULL.
+## 1️⃣ Maximum layoffs recorded
+```sql
+SELECT MAX(total_laid_off)
+FROM layoffs_staging_2;
+```
 
-✔️ Step 4: Final Table Ready
-
-layoffs_staging_2 becomes the cleaned dataset used for EDA.
-
-🔍 4. Exploratory Data Analysis (EDA)
-📌 Key Questions Explored
-1. Maximum layoffs recorded
-SELECT MAX(total_laid_off) FROM layoffs_staging_2;
-
-2. Companies with 100% layoffs
-SELECT * 
+## 2️⃣ Companies with 100% layoffs
+```sql
+SELECT *
 FROM layoffs_staging_2
 WHERE percentage_laid_off = 1;
+```
 
-3. Top 10 companies by single largest layoff event
+## 3️⃣ Top 10 largest single layoff events
+```sql
 SELECT company, total_laid_off
 FROM layoffs_staging_2
 ORDER BY total_laid_off DESC
 LIMIT 10;
+```
 
-4. Top 10 companies by total layoffs
+## 4️⃣ Top 10 companies by total layoffs
+```sql
 SELECT company, SUM(total_laid_off)
 FROM layoffs_staging_2
 GROUP BY company
 ORDER BY 2 DESC
 LIMIT 10;
+```
 
-5. Countries with the highest total layoffs
+## 5️⃣ Countries with the highest total layoffs
+```sql
 SELECT country, SUM(total_laid_off)
 FROM layoffs_staging_2
 GROUP BY country
 ORDER BY 2 DESC
 LIMIT 10;
+```
 
-📈 Insights Found
+---
 
-The United States had the highest total layoffs among all countries.
+# 5. Insights
 
-Some companies laid off 100% of their workforce.
+- The **United States** leads all countries in total layoffs  
+- Several companies laid off **100%** of their workforce  
+- Companies like **Katerra** and **Britishvolt** had extremely large single-event layoffs  
 
-Companies like Katerra, Britishvolt, and others show unusually large single-event layoffs.
+---
 
-📂 5. Files in Repository
-File	Description
-data_cleaning.sql	Complete SQL workflow for cleaning and preparing the dataset
-eda.sql	SQL scripts used for exploratory data analysis
-README.md	Project overview, documentation, and insights
-🛠️ 6. Tech Stack
+# 6. Files in Repository
 
-MySQL (window functions, joins, data types, cleaning)
+| File | Description |
+|------|-------------|
+| `data_cleaning.sql` | Full SQL cleaning pipeline |
+| `eda.sql` | Exploratory analysis SQL queries |
+| `README.md` | Project documentation |
 
-SQL Developer / MySQL Workbench (optional)
+---
 
-GitHub for version control
+# 7. Tech Stack
 
-🚀 7. Key Learnings
+- **MySQL 8+**  
+- **MySQL Workbench / SQL Developer**  
+- **GitHub** for version control  
 
-How to professionally clean a dataset using SQL
+---
 
-Window functions for duplicates handling
+# 8. Key Learnings
 
-Standardizing messy fields (industry, country, date)
+- How to build a professional SQL cleaning workflow  
+- Using window functions for deduplication  
+- Standardizing inconsistent text fields  
+- Imputing missing values using JOINs  
+- Performing structured EDA using SQL  
 
-Using JOIN to backfill missing values
+---
 
-Performing effective EDA to extract insights
+# 9. Future Enhancements
 
-🙌 8. Future Enhancements
+- Add Power BI or Tableau dashboards  
+- Write stored procedures for automation  
+- Integrate with Python for extended analysis  
+- Build a pipeline for real-time data ingestion  
 
-Build visual dashboards using Power BI or Tableau
+---
 
-Write stored procedures for automated cleaning
-
-Deploy this project into a real-time analytics pipeline
